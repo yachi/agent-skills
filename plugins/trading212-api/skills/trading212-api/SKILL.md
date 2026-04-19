@@ -162,10 +162,14 @@ export T212_AUTH_HEADER="Basic $(echo -n "YOUR_API_KEY_HERE:YOUR_API_SECRET_HERE
 
 ### Making Requests
 
-**Before any API call**, validate `T212_ENV` (see the **Environment Validation** rule in the Security section):
+**Before any API call**, validate `T212_ENV` (see the **Environment Validation** rule in the Security section). An unset `T212_ENV` must be treated as an error — never silently default to live trading:
 
 ```bash
-if [[ "${T212_ENV:-live}" != "live" && "${T212_ENV:-live}" != "demo" ]]; then
+if [[ -z "$T212_ENV" ]]; then
+  echo "ERROR: T212_ENV is not set. Set it to 'live' or 'demo'." >&2
+  exit 1
+fi
+if [[ "$T212_ENV" != "live" && "$T212_ENV" != "demo" ]]; then
   echo "ERROR: T212_ENV must be 'live' or 'demo', got: '$T212_ENV'" >&2
   exit 1
 fi
@@ -195,7 +199,7 @@ curl --tlsv1.2 -u "$T212_API_KEY:$T212_API_SECRET" \
   "https://${T212_ENV:-live}.trading212.com/api/v0/equity/account/summary"
 ```
 
-> **Note:** All curl commands in this skill should include `--tlsv1.2` to enforce TLS 1.2 or higher and `--fail-with-body` to surface HTTP errors. These flags are shown in the examples below.
+> **Note:** When executing curl commands, **always add `--tlsv1.2`** to enforce TLS 1.2 or higher, even if the example below omits it. All examples include `--fail-with-body` to surface HTTP errors. If an example is missing either flag, add it yourself.
 
 > **Warning:** `T212_AUTH_HEADER` must be the full header value including the `Basic ` prefix.
 >
